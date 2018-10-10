@@ -145,12 +145,12 @@ def decoding_withKfold(X,Y_speech,Y_lips,n_fold,train_index,test_index,polynomia
         Y_lips_ap_TRAIN = Y_lips_standard[train_index[k], :]
         Y_lips_ap_TEST = Y_lips_standard[test_index[k], :]
 
-        # training models and predict
+
         if polynomialReg == True:
             X_TRAIN= np.concatenate((X_TRAIN,np.power(X_TRAIN,2)),1)
             X_TEST = np.concatenate((X_TEST, np.power(X_TEST, 2)), 1)
 
-
+        # training models and predict
         speechModel.fit(X_TRAIN, Y_envelope_sp_TRAIN)
         lipsModel.fit(X_TRAIN, Y_lips_ap_TRAIN)
 
@@ -309,10 +309,8 @@ if __name__ == '__main__':
     #r = [1e4, 1e5, 1e6, 1e7, 1e8, 1e9, 1e10]
 
     sub = ['Alice', 'Andrea', 'Daniel', 'Elena', 'Elenora', 'Elisa', 'Federica', 'Francesca', 'Gianluca1',
-                    'Giada', 'Giorgia',
-
-                    'Pasquale', 'Sara',
-                    'Silvia', 'Silvia2', 'Tommaso']
+           'Giada', 'Giorgia', 'Jonluca', 'Laura', 'Leonardo', 'Linda', 'Lucrezia', 'Manu', 'Marco', 'Martina', 'Pagani',
+           'Pasquale', 'Sara', 'Silvia', 'Silvia2', 'Tommaso']
 
     #sub = ['Gianluca1', 'Sara']
 
@@ -328,5 +326,5 @@ if __name__ == '__main__':
     # decoding(band='delta',regularization=r,tmin=0,tmax=0,n_fold=5,subject_name=sub,savepath=s2,nplot=n2)
     # decoding(band='theta',regularization=r,tmin=0,tmax=0,n_fold=5,subject_name=sub,savepath=s3,nplot=n3)
     # r = [1e4, 1e5, 1e6, 1e7, 1e8, 1e9, 1e10]
-    s4=s+'delta'
-    decoding(band='delta', regularization=r, n_fold=5, subject_name=sub, savepath=s4,polynomialReg=True)
+    s4=s+'original'
+    decoding(band='original', regularization=r, n_fold=5, subject_name=sub, savepath=s4,polynomialReg=True)
