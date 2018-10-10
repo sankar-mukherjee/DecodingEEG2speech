@@ -43,11 +43,11 @@ def useFreqBand(X_orig, Features_orig, band, method):
     elif method=='multitaper':
         [X_freq, Y_envelope_sp_freq,Y_lips_ap_freq] = Multitaper(X_orig, Features_orig, band)
 
-    return np.float32(X_freq), np.float32(Y_envelope_sp_freq),np.float32(Y_lips_ap_freq)
+    return np.float16(X_freq), np.float16(Y_envelope_sp_freq),np.float16(Y_lips_ap_freq)
 
 
 def Band_filtering(X_orig, Features_orig, band):
-    filt_params = dict(order=4, ftype='butter')
+    filt_params = dict(order=6, ftype='butter')
 
     if band=='original':
         X_freq=X_orig.get_data()
@@ -68,8 +68,6 @@ def Band_filtering(X_orig, Features_orig, band):
         X_freq = X_orig.filter(8, 12, method='iir', iir_params=filt_params)
         Y_envelope_sp_freq = Features_orig.filter(8, 12, method='iir', iir_params=filt_params).get_data()[:, 0, :]
         Y_lips_ap_freq = Features_orig.filter(8, 12, method='iir', iir_params=filt_params).get_data()[:, 2, :]
-
-        np.float32
 
     return X_freq, Y_envelope_sp_freq,Y_lips_ap_freq
 
@@ -103,7 +101,7 @@ def Multitaper(X_orig, Features_orig, band):
     return X_freq, Y_envelope_sp_freq,Y_lips_ap_freq
 
 
-def decoding_withKfold(X,Y_speech,Y_lips,n_fold,train_index,test_index):
+def decoding_withKfold(X,Y_speech,Y_lips,n_fold,train_index,test_index,polynomialReg):
 
     predictions_speech= np.zeros((Y_speech.shape))
     speech = np.zeros((Y_speech.shape))
@@ -148,6 +146,11 @@ def decoding_withKfold(X,Y_speech,Y_lips,n_fold,train_index,test_index):
         Y_lips_ap_TEST = Y_lips_standard[test_index[k], :]
 
         # training models and predict
+        if polynomialReg == True:
+            X_TRAIN= np.concatenate((X_TRAIN,np.power(X_TRAIN,2)),1)
+            X_TEST = np.concatenate((X_TEST, np.power(X_TEST, 2)), 1)
+
+
         speechModel.fit(X_TRAIN, Y_envelope_sp_TRAIN)
         lipsModel.fit(X_TRAIN, Y_lips_ap_TRAIN)
 
@@ -173,7 +176,7 @@ def decoding_withKfold(X,Y_speech,Y_lips,n_fold,train_index,test_index):
 
 
 
-def decoding(band,regularization,n_fold,subject_name, savepath):
+def decoding(band,regularization,n_fold,subject_name, savepath,polynomialReg=False):
 
     data_path = "./ProcessedData/Final_"
     eeg="_processed-epo.fif"
@@ -181,7 +184,7 @@ def decoding(band,regularization,n_fold,subject_name, savepath):
 
     sfreq=100
 
-    T= [51, 61, 71, 81, 91, 101, 111, 121, 131, 141, 151]
+    T= [51, 56, 61, 66, 71, 76, 81, 86, 91, 96, 101, 106, 111, 116, 121, 126, 131, 136, 141, 146, 151]
 
 
     score_speech_all_sub={}
@@ -198,17 +201,17 @@ def decoding(band,regularization,n_fold,subject_name, savepath):
         X_orig= mne.read_epochs(data_path + s + eeg)
         Features_orig= mne.read_epochs(data_path + s + features)
 
-        [X_orig,Y_envelope_sp_orig,Y_lips_ap_orig]= useFreqBand(X_orig, Features_orig, band, 'multitaper')
+        [X_orig,Y_envelope_sp_orig,Y_lips_ap_orig]= useFreqBand(X_orig, Features_orig, band, 'band_pass')
 
         time = mne.read_epochs(data_path + s + features).times # 1d array (N_time)
         channels = mne.read_epochs(data_path + s + eeg).ch_names
 
-        predictions_speech_oneSub = np.zeros((Y_envelope_sp_orig.shape[0], 200, X_orig.shape[1],len(T),len(regularization)),dtype="float32") # dimendions:(n_trials, trial length, n_channels, n_delays, n_reg_params)
-        predictions_lips_oneSub = np.zeros((Y_lips_ap_orig.shape[0],200,X_orig.shape[1],len(T),len(regularization)),dtype="float32")
-        true_speech_oneSub = np.zeros((Y_envelope_sp_orig.shape[0], 200, X_orig.shape[1],len(T), len(regularization)),dtype="float32")
-        true_lips_oneSub = np.zeros((Y_lips_ap_orig.shape[0], 200, X_orig.shape[1],len(T), len(regularization)),dtype="float32")
-        score_speech_oneSub=np.zeros((X_orig.shape[1],len(T),len(regularization)),dtype="float32")  # dimendions:(n_channels, n_delays, n_reg_params)
-        score_lips_oneSub = np.zeros((X_orig.shape[1],len(T), len(regularization)),dtype="float32")
+        predictions_speech_oneSub = np.zeros((Y_envelope_sp_orig.shape[0], 200, X_orig.shape[1],len(T),len(regularization)),dtype="float16") # dimendions:(n_trials, trial length, n_channels, n_delays, n_reg_params)
+        predictions_lips_oneSub = np.zeros((Y_lips_ap_orig.shape[0],200,X_orig.shape[1],len(T),len(regularization)),dtype="float16")
+        true_speech_oneSub = np.zeros((Y_envelope_sp_orig.shape[0], 200, X_orig.shape[1],len(T), len(regularization)),dtype="float16")
+        true_lips_oneSub = np.zeros((Y_lips_ap_orig.shape[0], 200, X_orig.shape[1],len(T), len(regularization)),dtype="float16")
+        score_speech_oneSub=np.zeros((X_orig.shape[1],len(T),len(regularization)),dtype="float16")  # dimendions:(n_channels, n_delays, n_reg_params)
+        score_lips_oneSub = np.zeros((X_orig.shape[1],len(T), len(regularization)),dtype="float16")
 
 
         train_index, test_index = k_fold(Y_envelope_sp_orig,n_fold) # define index for train and test for each of the k folds
@@ -229,7 +232,7 @@ def decoding(band,regularization,n_fold,subject_name, savepath):
                     Y_envelope_sp = Y_envelope_sp_orig[:,101:301]
                     Y_lips_ap = Y_lips_ap_orig[:,101:301]
 
-                    [speech_score, lips_score, predictions_speechh, predictions_lipss, speech, lips]=decoding_withKfold(X,Y_envelope_sp,Y_lips_ap,n_fold,train_index,test_index)
+                    [speech_score, lips_score, predictions_speechh, predictions_lipss, speech, lips]=decoding_withKfold(X,Y_envelope_sp,Y_lips_ap,n_fold,train_index,test_index,polynomialReg)
                     predictions_lips_oneSub[:,:,c,j,i]=predictions_lipss
                     predictions_speech_oneSub[:,:,c,j,i]=predictions_speechh
                     true_speech_oneSub[:,:,c, j, i]=lips
@@ -307,7 +310,7 @@ if __name__ == '__main__':
 
     sub = ['Alice', 'Andrea', 'Daniel', 'Elena', 'Elenora', 'Elisa', 'Federica', 'Francesca', 'Gianluca1',
                     'Giada', 'Giorgia',
-                    'Jonluca', 'Laura', 'Leonardo', 'Linda', 'Lucrezia', 'Manu', 'Marco', 'Martina', 'Pagani',
+
                     'Pasquale', 'Sara',
                     'Silvia', 'Silvia2', 'Tommaso']
 
@@ -326,4 +329,4 @@ if __name__ == '__main__':
     # decoding(band='theta',regularization=r,tmin=0,tmax=0,n_fold=5,subject_name=sub,savepath=s3,nplot=n3)
     # r = [1e4, 1e5, 1e6, 1e7, 1e8, 1e9, 1e10]
     s4=s+'delta'
-    decoding(band='delta', regularization=r, n_fold=5, subject_name=sub, savepath=s4)
+    decoding(band='delta', regularization=r, n_fold=5, subject_name=sub, savepath=s4,polynomialReg=True)
