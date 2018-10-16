@@ -308,11 +308,11 @@ if __name__ == '__main__':
     r=[1e4]
     #r = [1e4, 1e5, 1e6, 1e7, 1e8, 1e9, 1e10]
 
-    sub = ['Alice', 'Andrea', 'Daniel', 'Elena', 'Elenora', 'Elisa', 'Federica', 'Francesca', 'Gianluca1',
-           'Giada', 'Giorgia', 'Jonluca', 'Laura', 'Leonardo', 'Linda', 'Lucrezia', 'Manu', 'Marco', 'Martina', 'Pagani',
-           'Pasquale', 'Sara', 'Silvia', 'Silvia2', 'Tommaso']
+    # sub = ['Alice', 'Andrea', 'Daniel', 'Elena', 'Elenora', 'Elisa', 'Federica', 'Francesca', 'Gianluca1',
+    #        'Giada', 'Giorgia', 'Jonluca', 'Laura', 'Leonardo', 'Linda', 'Lucrezia', 'Manu', 'Marco', 'Martina', 'Pagani',
+    #        'Pasquale', 'Sara', 'Silvia', 'Silvia2', 'Tommaso']
 
-    #sub = ['Gianluca1', 'Sara']
+    sub = ['Gianluca1', 'Sara']
 
     s='./results_NoTRF/'
     s1=s+'alfa'
